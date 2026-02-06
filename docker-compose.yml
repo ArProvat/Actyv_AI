@@ -1,13 +1,9 @@
-version: '1.0'
-
 services:
-  Flow_AI:
+  actyv_ai:
     build: .
-    image: Actyv_AI
+    image: actyv_ai
     ports:
-      -"8000:8000"
+      - "8000:8000"
     env_file:
       - .env
     restart: unless-stopped
-
-    

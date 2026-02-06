@@ -5,12 +5,12 @@ from app.config.settings import settings
 from .food_scan_schema import FoodScanResponse
 from fastapi import HTTPException
 import json
+import base64
 
 class food_scan_service:
      def __init__(self):
           self.client = AsyncOpenAI(
-          api_key=settings.OPENAI_API_KEY,
-          tamperature=0.5
+          api_key=settings.OPENAI_API_KEY
           )
      
      async def generate_response(self,food_image: bytes) -> str:
@@ -19,18 +19,18 @@ class food_scan_service:
 
                completion = await self.client.chat.completions.create(
                     model="gpt-4.1-mini",
+                    temperature=0.2,
                     messages=[
                          {"role": "system", "content": System_prompt},
                          {"role": "user", "content":[
-                         {'type':'text','text':food_scan_user_prompt.format(food_image=food_image)},
-                         {'type':'image_url','image_url':{'url':f'data:image/jpeg;base64,{food_image.decode("utf-8")}'}}
+                         {'type':'text','text':food_scan_user_prompt},
+                         {'type':'image_url','image_url':{'url':f'data:image/jpeg;base64,{base64.b64encode(food_image).decode("utf-8")}'}}
                          ]}
 
                     ]
                )
 
                response = completion.choices[0].message.content
-
                if response.startswith('```json'):
                     response = response[7:]
                if response.endswith('```'):

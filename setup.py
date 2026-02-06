@@ -15,7 +15,7 @@ setuptools.setup(
     version=__version__,
     author=AUTHOR_USER_NAME,
     author_email=AUTHOR_EMAIL,
-    description="GenAI Project structure",
+    description="The fitness app developing is designed to offer a comprehensive fitness experience, combining personalized coaching with social interaction and a multi-vendor marketplace. This app is not just about tracking workouts and nutrition;",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url=f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}",

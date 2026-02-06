@@ -7,7 +7,7 @@ router = APIRouter()
 food_scan_instance =food_scan_service()
 
 @router.post("/food-scan")
-async def food_scan(file: UploadFile = File(...), token: dict = Depends(verify_token)):
+async def food_scan(file: UploadFile = File(...)):
      try:
           if not file:
                raise HTTPException(status_code=400, detail="No file provided")
