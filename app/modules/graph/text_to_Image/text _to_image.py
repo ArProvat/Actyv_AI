@@ -21,8 +21,8 @@ class TextToImage:
           self.image_llm = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
           self.small_llm = ChatOpenAI(model="gpt-4o-mini",temperature=0.2)
      
-     async def text_to_image(self,state:GraphState,config:RunnableConfig):
-          narrative,image_prompt = await self.get_image_prompt(state["messages"][-3:])
+     async def get_image(self,messageHistory:list):
+          narrative,image_prompt = await self.get_image_prompt(messageHistory)
 
           response = await self.image_llm.images.generate(
                     model="gpt-image-1-mini",
