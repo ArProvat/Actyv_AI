@@ -3,7 +3,6 @@ uvicorn
 pydantic
 pydantic-settings
 motor
-pymongo
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
@@ -12,6 +11,7 @@ openai
 langchain
 langchain-openai
 langchain-community
+langgraph-checkpoint-mongodb
 langchain-core
 langgraph
 python-dotenv
