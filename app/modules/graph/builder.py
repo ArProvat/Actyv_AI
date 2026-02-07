@@ -1,14 +1,13 @@
 from .node import Node
 from langgraph.graph import START, END, StateGraph
 from .state import GraphState
-
 Node_instance = Node()
 
 
 def route_after_router(state: GraphState) -> str:
      """Route based on workflow decision"""
      workflow = state.get("workflow", "conversation")
-     if workflow == "conversation_with_image":
+     if workflow == "image":
           return "conversation_with_image"
      return "conversation"
 

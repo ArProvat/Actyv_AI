@@ -6,13 +6,15 @@ from langchain_core.messages import HumanMessage, AIMessage, RemoveMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableConfig
-from .text_to_Image.text_to_image import TextToImage
+from .text_to_image import TextToImage  
+
 
 class Node:
      def __init__(self):
           self.llm = ChatOpenAI(model="gpt-5-mini", temperature=0.3)
           self.small_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-
+          self.image_node = TextToImage()
+     
      async def router_node(self, state: GraphState):
           """Route to appropriate conversation node"""
           prompt = ChatPromptTemplate.from_messages([
@@ -22,9 +24,16 @@ class Node:
 
           chain = prompt | self.small_llm | StrOutputParser()
           response = await chain.ainvoke({"messages": state["messages"][-3:]})
+          
+          # Clean up the response and map 'image' to 'conversation_with_image'
+          workflow = response.strip().lower()
+          if workflow == "image":
+               workflow = "conversation_with_image"
+          elif workflow != "conversation":
+               # Default to conversation if response is unexpected
+               workflow = "conversation"
      
-          # Expecting response like "conversation" or "conversation_with_image"
-          return {"workflow": response.strip()}
+          return {"workflow": workflow}
 
      async def personal_setup_node(self, state: GraphState, config: RunnableConfig):
           """Fetch user's personal setup/preferences"""
@@ -33,56 +42,55 @@ class Node:
           return {"personal_setup": "want to do gym notion else want to do "}
 
      async def conversation_node(self, state: GraphState, config: RunnableConfig):
-          """Stream conversation responses"""
+          """Handle conversation responses - RETURNS state update"""
+          # Format the system prompt with context
+          system_message = CONVERSATION_PROMPT.format(
+               personal_setup=state.get("personal_setup", "No personal setup available"),
+               summary=state.get("summary", "No previous conversation summary")
+          )
+          
           prompt = ChatPromptTemplate.from_messages([
-               ("system", CONVERSATION_PROMPT),
+               ("system", system_message),
                MessagesPlaceholder(variable_name="messages")
           ])
           
           chain = prompt | self.llm
-          full_response = []
           
-          async for chunk in chain.astream({
-               "messages": state["messages"][-20:],
-               "personal_setup": state.get("personal_setup", ""),
-               "summary": state.get("summary", "")
-          }):
-               if hasattr(chunk, 'content') and chunk.content:
-                    full_response.append(chunk.content)
-                    yield {'type': 'text', 'content': chunk.content}
+          # Invoke to get complete response
+          response = await chain.ainvoke({
+               "messages": state["messages"][-20:]
+          })
           
           # Return the complete message for state update
-          return {
-               'messages': [AIMessage(content="".join(full_response))]
-          }
+          return {'messages': [AIMessage(content=response.content)]}
 
      async def conversation_node_with_image(self, state: GraphState, config: RunnableConfig):
-          """Stream conversation responses with image generation"""
+          """Handle conversation responses with image generation - RETURNS state update"""
           # Generate image first
-          image_node = TextToImage()
-          image = await image_node.get_image(state["messages"][-3:])
+          image_url = await self.image_node.get_image(state["messages"][-3:])
+          
+          # Format the system prompt with context
+          system_message = CONVERSATION_PROMPT.format(
+               personal_setup=state.get("personal_setup", "No personal setup available"),
+               summary=state.get("summary", "No previous conversation summary")
+          )
           
           prompt = ChatPromptTemplate.from_messages([
-               ("system", CONVERSATION_PROMPT),
+               ("system", system_message),
                MessagesPlaceholder(variable_name="messages")
           ])
           
           chain = prompt | self.llm
-          full_response = []
           
-          async for chunk in chain.astream({
-               "messages": state["messages"][-20:],
-               "personal_setup": state.get("personal_setup", ""),
-               "summary": state.get("summary", "")
-          }):
-               if hasattr(chunk, 'content') and chunk.content:
-                    full_response.append(chunk.content)
-                    yield {'type': 'text', 'content': chunk.content}
+          # Invoke to get complete response
+          response = await chain.ainvoke({
+               "messages": state["messages"][-20:]
+          })
           
-          yield {'type': 'image', 'content': image}
-          
+          # Return both message and image
           return {
-               'messages': [AIMessage(content="".join(full_response))]
+               'messages': [AIMessage(content=response.content)],
+               'generated_image': image_url
           }
 
      async def summary_node(self, state: GraphState, config: RunnableConfig):
@@ -110,19 +118,17 @@ class Node:
           
           return {}
 
-     async def generate_title(self,state: GraphState, config: RunnableConfig):
+     async def generate_title(self, state: GraphState, config: RunnableConfig):
           """Generate title for the conversation"""
           if state.get('title'):
                return {}
+          
           prompt = ChatPromptTemplate.from_messages([
                ("system", "Generate a title for the conversation base on the message in 6-8 words"),
                ("user", "{message}")
           ])
           
           chain = prompt | self.small_llm | StrOutputParser()
-          title = ""
-          for chunk in chain.astream({"message": state["messages"][-1].content}):
-               if hasattr(chunk, 'content') and chunk.content:
-                    title += chunk.content
-                    yield {'type': 'title', 'content': title}
+          title = await chain.ainvoke({"message": state["messages"][-1].content})
+          
           return {"title": title}
