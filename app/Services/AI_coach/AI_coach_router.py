@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import json
-from app.modules.ai_coach import AI_coach
+from .AI_coach import AI_coach
 
 
 

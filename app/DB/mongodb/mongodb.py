@@ -1,12 +1,10 @@
-
-
 from app.config.settings import settings
 from motor.motor_asyncio import AsyncIOMotorClient
 
 class MongoDB:
      def __init__(self):
-          self.client = AsyncIOMotorClient(settings.mongodb_url)
-          self.db = self.client[settings.mongodb_db]
+          self.client = AsyncIOMotorClient(settings.DATABASE_URL)
+          self.db = self.client[settings.DATABASE_NAME]
           self.user_collection = self.db["users"]
           self.session_collection = self.db["sessions"]
           self.message_collection = self.db["messages"]
