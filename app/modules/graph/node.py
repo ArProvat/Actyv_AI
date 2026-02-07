@@ -12,6 +12,8 @@ class Node:
           self.llm = ChatOpenAI(model="gpt-5-mini",temperature=0.3)
           self.small_llm = ChatOpenAI(model="gpt-4o-mini",temperature=0.2)
      
+
+
      async def router_node(self,state:GraphState):
 
           prompt = ChatPromptTemplate.from_template(
@@ -25,9 +27,14 @@ class Node:
           chain = prompt | self.small_llm 
           response = chain.invoke({"messages":state["messages"][-3:]})
           return {"workflow":response.workflow}
+
+
+
      async def  peronal_setup_node(self,state:GraphState,config:RunnableConfig):
           user_id = config.configurable.get("user_id")
           return {"personal_setup":"want to do gym notion else want to do "}
+
+
 
      async def conversation_node(self,state:GraphState,config:RunnableConfig):
           prompt = ChatPromptTemplate.from_template(
@@ -48,6 +55,9 @@ class Node:
                full_response.append(chunk)
                yield {'type':'text','content':chunk.content}
           return {'messages':AIMessage(content="".join([chunk.content for chunk in full_response]))}
+
+
+
      async def conversation_node_with_image(self,state:GraphState,config:RunnableConfig):
           
           image_node = TextToImage()
@@ -73,4 +83,27 @@ class Node:
           yield {'type':'image','content':image}
           return {'messages':AIMessage(content="".join([chunk.content for chunk in full_response])) }
 
+
+     async def summary_node(self,state:GraphState,config:RunnableConfig):
+          if len(state['messages']) > 20:
+               if state['summary']:
+                    summary_message = (
+                         f"This is summary of the conversation to date between Ava and the user: {state['summary']}\n\n"
+                         "Extend the summary by taking into account the new messages above:"
+                    )
+               else:
+                    summary_message = (
+                         "Create a summary of the conversation above between Ava and the user. "
+                         "The summary must be a short description of the conversation so far, "
+                         "but that captures all the relevant information shared between Ava and the user:"
+                    )
+
+               messages = state['messages']+ [HumanMessage(content=summary_message)]
+               summary = await self.small_llm.ainvoke(messages).content
+
+               delete_message = [RemoveMessage(id=m.id) for m in state['messages'][:-5]]
+               return {'summary':summary,'messages':delete_message}
+          else:
+               return {}
+                    
 

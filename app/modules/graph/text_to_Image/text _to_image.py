@@ -33,10 +33,10 @@ class TextToImage:
                     response_format="url"
           )
           image_url = response.data[0].url
-          img_response = requests.get(image_url)
-          image_bytes = BytesIO(img_response.content)
-          s3_manager = S3_Manager()
-          image_url = await s3_manager.upload_file_from_bytes(image_bytes)
+          #img_response = requests.get(image_url)
+          #image_bytes = BytesIO(img_response.content)
+          #s3_manager = S3_Manager()
+          #image_url = await s3_manager.upload_file_from_bytes(image_bytes)
           return image_url
           
 

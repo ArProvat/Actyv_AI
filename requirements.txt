@@ -16,5 +16,7 @@ langchain-core
 langgraph
 python-dotenv
 python-multipart
+python-docx
+pymupdf
 
 
