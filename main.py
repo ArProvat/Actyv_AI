@@ -1,5 +1,17 @@
 from fastapi import FastAPI
 from app.Services.food_scan.food_scan_router import router as food_scan_router
+from fastapi.middleware.cors import CORSMiddleware
+
+
+# CORS middleware
+app.add_middleware(
+     CORSMiddleware,
+     allow_origins=["*"],
+     allow_credentials=True,
+     allow_methods=["*"],
+     allow_headers=["*"],
+)
+     
 
 app = FastAPI(
      title="Actyv AI",

@@ -6,6 +6,7 @@ class GraphState(MessagesState):
      personal_setup:str 
      workflow: str
      image_path:str
+     title:str
 
      
      
