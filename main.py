@@ -17,8 +17,8 @@ app.add_middleware(
 )
 
 
-app.include_router(food_scan_router,prefix="/api/v1",tags=["Food-scan"])
-app.include_router(AI_coach_router,prefix="/api/v1",tags=["AI-coach"])
+app.include_router(food_scan_router,prefix="/v1",tags=["Food-scan"])
+app.include_router(AI_coach_router,prefix="/v1",tags=["AI-coach"])
 
 if __name__ == "__main__":
      import uvicorn
