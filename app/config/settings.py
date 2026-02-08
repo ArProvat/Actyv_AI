@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    DATABASE_NAME: str
     SECRET_KEY: str
     OPENAI_API_KEY: str
     AWS_ACCESS_KEY_ID: str
