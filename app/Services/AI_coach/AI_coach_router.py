@@ -1,9 +1,10 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import json
 from .AI_coach import AI_coach
+from app.modules.auth.auth import verify_token
 from fastapi.encoders import jsonable_encoder
 
 
@@ -56,8 +57,8 @@ async def chat_endpoint(request: ChatRequest):
 async def chat_with_file_endpoint(
      query: str = Form(...),
      file: Optional[UploadFile] = File(None),
-     user_id: Optional[str] = Form(None),
      session_id: Optional[str] = Form(None),
+     user: Depends(verify_token)
 ):
      """
      Chat endpoint with optional file upload
@@ -72,7 +73,7 @@ async def chat_with_file_endpoint(
      """
      file_bytes = None
      file_extension = None
-
+     user_id = user["user_id"]
      if file:
           file_bytes = await file.read()
           if file.filename:
@@ -102,14 +103,15 @@ async def chat_with_file_endpoint(
      )
 
 
-@router.get("/api/sessions/{user_id}")
-async def get_user_sessions(user_id: str):
+@router.get("/api/sessions")
+async def get_user_sessions(user: Depends(verify_token)):
      """
      Get all sessions for a user
 
      Returns:
           List of sessions with session_id, title, created_at, updated_at
      """
+     user_id = user["user_id"]
      try:
           sessions = await ai_coach.get_user_sessions(user_id)
           return JSONResponse(
@@ -122,15 +124,16 @@ async def get_user_sessions(user_id: str):
 
 
 @router.get("/api/messages/{session_id}")
-async def get_session_messages(session_id: str):
+async def get_session_messages(session_id: str, user: Depends(verify_token)):
      """
      Get all messages for a session
 
      Returns:
           List of messages with role, content, timestamp
      """
+     user_id = user["user_id"]
      try:
-          messages = await ai_coach.get_chat_history(session_id)
+          messages = await ai_coach.get_chat_history(session_id, user_id)
           return JSONResponse(
                content={"success": True, "messages": jsonable_encoder(messages)}
           )
@@ -141,13 +144,14 @@ async def get_session_messages(session_id: str):
 
 
 @router.delete("/api/sessions/{session_id}")
-async def delete_session(session_id: str, user_id: str = Form(...)):
+async def delete_session(session_id: str, user: Depends(verify_token)):
      """
      Delete a session and all its messages
 
      Form data:
           - user_id: User identifier for authorization
      """
+     user_id = user["user_id"]
      try:
           await ai_coach.delete_session(session_id, user_id)
           return JSONResponse(
