@@ -11,6 +11,8 @@ class MongoDB:
           self.user_collection = self.db["users"]
           self.session_collection = self.db["sessions"]
           self.message_collection = self.db["messages"]
+          self.workout_collection = self.db["workouts"]
+          self.meal_collection = self.db["meals"]
      
      async def init_indexes(self):
           """Initialize database indexes - call this on app startup"""
@@ -18,6 +20,10 @@ class MongoDB:
           await self.session_collection.create_index([("session_id", 1), ("user_id", 1)], unique=True)
           await self.message_collection.create_index([("session_id", 1), ("timestamp", 1)])
           await self.message_collection.create_index("user_id")
+          await self.workout_collection.create_index("user_id")
+          await self.meal_collection.create_index("user_id")
+          await self.meal_collection.create_index([("date", 1), ("user_id", 1)], unique=True)
+          await self.workout_collection.create_index([("date", 1), ("user_id", 1)], unique=True)
 
      async def get_sessions(self, user_id: str) -> List[Dict]:
           """Get all sessions for a user"""
@@ -127,3 +133,31 @@ class MongoDB:
                "user_id": user_id
           })
      
+     
+     async def get_meal(self, user_id: str):
+          """Get all meals for a user"""
+          cursor = await self.meal_collection.find(
+               {"user_id": user_id},
+               {"meal": 1},
+               sort=["created_at", -1],
+               limit=3
+          )
+          return await cursor.to_list(length=3)
+     async def get_workout(self, user_id: str):
+          """Get all workouts for a user"""
+          cursor = await self.workout_collection.find(
+               {"user_id": user_id},
+               {"workout": 1},
+               sort=["created_at", -1],
+               limit=3
+          )
+          return await cursor.to_list(length=3)
+     async def get_personal_setup(self, user_id: str):
+          """Get all personal setups for a user"""
+          cursor = await self.personal_setup_collection.find(
+               {"user_id": user_id},
+               {"personal_setup": 1},
+               sort=["created_at", -1],
+               limit=1
+          )
+          return await cursor.to_list(length=1)
