@@ -166,7 +166,7 @@ Generate today's nutrition plan now
 """
 
 
-workout_system_prompt ="""
+Workout_system_prompt ="""
 You are a World-Class Strength and Conditioning Coach. 
 You specialize in designing personalized, data-driven workout programs that optimize for muscle growth, strength, and injury prevention.
 
@@ -190,7 +190,7 @@ Strictly follow the schema.
 """
 
 
-workout_user_prompt ="""
+Workout_user_prompt ="""
 {personal_setup}
 
 [WORKOUT HISTORY: PAST 3 DAYS] {past_3_days_workouts}

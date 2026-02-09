@@ -152,3 +152,12 @@ class MongoDB:
                limit=3
           )
           return await cursor.to_list(length=3)
+     async def get_personal_setup(self, user_id: str):
+          """Get all personal setups for a user"""
+          cursor = await self.personal_setup_collection.find(
+               {"user_id": user_id},
+               {"personal_setup": 1},
+               sort=["created_at", -1],
+               limit=1
+          )
+          return await cursor.to_list(length=1)
