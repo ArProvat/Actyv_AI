@@ -13,6 +13,8 @@ class MongoDB:
           self.message_collection = self.db["messages"]
           self.workout_collection = self.db["workouts"]
           self.meal_collection = self.db["meals"]
+          self.personal_collection = self.db["personalSetup"]
+          self.product_collection = self.db["products"]
      
      async def init_indexes(self):
           """Initialize database indexes - call this on app startup"""
@@ -143,6 +145,8 @@ class MongoDB:
                limit=3
           )
           return await cursor.to_list(length=3)
+
+
      async def get_workout(self, user_id: str):
           """Get all workouts for a user"""
           cursor = await self.workout_collection.find(
@@ -161,3 +165,4 @@ class MongoDB:
                limit=1
           )
           return await cursor.to_list(length=1)
+
