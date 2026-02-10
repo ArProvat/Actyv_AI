@@ -22,10 +22,59 @@ class MongoDB:
           await self.session_collection.create_index([("session_id", 1), ("user_id", 1)], unique=True)
           await self.message_collection.create_index([("session_id", 1), ("timestamp", 1)])
           await self.message_collection.create_index("user_id")
-          await self.workout_collection.create_index("user_id")
+          await self.personal_collection.create_index("user_id")
+          await self.product_collection.create_index("_id")
+          await self.product_collection.create_index("vendor_id")
+          await self.product_collection.create_index("category")
+          await self.product_collection.create_index("status")
+          await self.product_collection.create_index("price")
+          await self.product_collection.create_index("averageRating")
           await self.meal_collection.create_index("user_id")
           await self.meal_collection.create_index([("date", 1), ("user_id", 1)], unique=True)
+          await self.workout_collection.create_index("user_id")
           await self.workout_collection.create_index([("date", 1), ("user_id", 1)], unique=True)
+          await self.create_vector_search_index(self.product_collection)
+
+
+     async def create_vector_search_index(self,collection):
+     """Create vector search index for products collection"""
+     
+     index_definition = {
+          "fields": [
+               {
+                    "type": "vector",
+                    "path": "embedding",
+                    "numDimensions": 1536,  # Change based on your embedding model
+                    "similarity": "cosine"  # or "euclidean" or "dotProduct"
+               },
+               {
+                    "type": "filter",
+                    "path": "category"
+               },
+               {
+                    "type": "filter",
+                    "path": "status"
+               },
+               {
+                    "type": "filter",
+                    "path": "price"
+               },
+               {
+                    "type": "filter",
+                    "path": "averageRating"
+               }
+          ]
+     }
+     
+     # Create the search index
+     collection.create_search_index(
+          {
+               "definition": index_definition,
+               "name": "product_vector_index"
+          }
+     )
+     print("Vector search index created successfully!")
+
 
      async def get_sessions(self, user_id: str) -> List[Dict]:
           """Get all sessions for a user"""
