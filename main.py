@@ -5,12 +5,15 @@ from app.Services.meal_generation.meal_generation_router import router as meal_g
 from app.Services.dailly_workout.dailly_workout_router import router as daily_workout_router
 from app.Services.products.products_router import router as product_router
 from fastapi.middleware.cors import CORSMiddleware
+from app.DB.mongodb.mongodb import MongoDB
+
 
 app = FastAPI(
      title="Actyv AI",
      description="The fitness app developing is designed to offer a comprehensive fitness experience, combining personalized coaching with social interaction and a multi-vendor marketplace",
      version="1.0.0"
 )
+
 app.add_middleware(
      CORSMiddleware,
      allow_origins=["*"],
@@ -26,6 +29,11 @@ app.include_router(meal_generation_router,prefix="/v1",tags=["Meal-generation"])
 app.include_router(daily_workout_router,prefix="/v1",tags=["Daily-workout"])
 app.include_router(product_router,prefix="/v1",tags=["Product"])
 
+
+@app.on_event("startup")
+async def startup_event():
+     db = MongoDB()
+     await db.init_indexes()
 
 if __name__ == "__main__":
      import uvicorn

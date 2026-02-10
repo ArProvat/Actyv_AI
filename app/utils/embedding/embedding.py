@@ -5,10 +5,10 @@ class LocalEmbeddingService:
      def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
           self.model = SentenceTransformer(model_name)
 
-     def generate_embedding(self, text: str) -> np.ndarray:
+     async def generate_embedding(self, text: str) -> np.ndarray:
           return self.model.encode(text, convert_to_numpy=True)
 
-     def generate_weighted_search_vector(
+     async def generate_weighted_search_vector(
           self, 
           query_text: str, 
           setup_text: str, 
@@ -27,7 +27,7 @@ class LocalEmbeddingService:
 
           return combined_vector.tolist()
      
-     def create_product_text(self, product: Product) -> str:
+     async def create_product_text(self, product: Product) -> str:
           features_text = ", ".join(product.features) if product.features else ""
           variants_text = ", ".join(product.variants) if product.variants else ""
           
@@ -40,7 +40,7 @@ class LocalEmbeddingService:
           """.strip()
           
           return text
-     def create_setup_text(self, setup: Setup) -> str:
+     async def create_setup_text(self, setup: Setup) -> str:
           return f"""
           fitnessGoal: {setup.fitnessGoal}
           fitnessLevel: {setup.fitnessLevel}

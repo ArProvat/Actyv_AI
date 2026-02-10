@@ -3,25 +3,25 @@ from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from app.config.settings import settings
 from app.Services.products.products_schema import Product
-from app.utils.embedding.embedding import EmbeddingService
+from app.utils.embedding.embedding import LocalEmbeddingService
 
 
 class ProductService:
      def __init__(self ):
           self.client = AsyncIOMotorClient(settings.DATABASE_URL)
           self.db = self.client[settings.DATABASE_NAME]
-          self.product_collection = self.db["products"]
-          self.embedding_service = EmbeddingService()
-
+          self.products_collection = self.db["products"]
+          self.embedding_service = LocalEmbeddingService()
+     
      async def create_product_with_embedding(self, product_data: dict) -> Product:
           """Create a product and generate its embedding"""
           product = Product(**product_data)
           
-          product_text = self.embedding_service.create_product_text(product)
-          embedding = self.embedding_service.generate_embedding(product_text)
+          product_text = await self.embedding_service.create_product_text(product)
+          embedding = await self.embedding_service.generate_embedding(product_text)
           product.embedding = embedding
           
-          result = self.products_collection.insert_one(
+          result = await self.products_collection.insert_one(
                product.model_dump(by_alias=True, exclude={"id"})
           )
           product.id = result.inserted_id
@@ -35,8 +35,8 @@ class ProductService:
                return False
           
           product = Product(**product_data)
-          product_text = self.embedding_service.create_product_text(product)
-          embedding = self.embedding_service.generate_embedding(product_text)
+          product_text = await self.embedding_service.create_product_text(product)
+          embedding = await self.embedding_service.generate_embedding(product_text)
           
           await self.products_collection.update_one(
                {"_id": ObjectId(product_id)},
@@ -130,7 +130,7 @@ class ProductService:
                }
           })
           
-          results = list(self.products_collection.aggregate(pipeline))
+          results = list(await self.products_collection.aggregate(pipeline))
           return results
      
      async def search_by_text_query(
@@ -142,8 +142,8 @@ class ProductService:
      ) -> List[Dict]:
           """Search products using natural language query"""
           personal_setup = await self.get_personal_setup(user_id)
-          setup_text = self.embedding_service.create_setup_text(personal_setup)
-          query_embedding = self.embedding_service.generate_weighted_search_vector(query,setup_text)
+          setup_text = await self.embedding_service.create_setup_text(personal_setup)
+          query_embedding = await self.embedding_service.generate_weighted_search_vector(query,setup_text)
           
           return await self.vector_search_products(
                query_embedding=query_embedding,
