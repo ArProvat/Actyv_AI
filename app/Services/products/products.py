@@ -2,8 +2,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from app.config.settings import settings
-from app.utils.embedding.embedding import EmbeddingService
 from app.Services.products.products_schema import Product
+from app.utils.embedding.embedding import EmbeddingService
 
 
 class ProductService:
@@ -135,13 +135,15 @@ class ProductService:
      
      async def search_by_text_query(
           self,
+          user_id: str,
           query: str,
           limit: int = 10,
           filters: Optional[Dict[str, Any]] = None
      ) -> List[Dict]:
           """Search products using natural language query"""
-          
-          query_embedding = self.embedding_service.generate_embedding(query)
+          personal_setup = await self.get_personal_setup(user_id)
+          setup_text = self.embedding_service.create_setup_text(personal_setup)
+          query_embedding = self.embedding_service.generate_weighted_search_vector(query,setup_text)
           
           return await self.vector_search_products(
                query_embedding=query_embedding,
@@ -166,3 +168,9 @@ class ProductService:
           )
           
           return [r for r in results if str(r["_id"]) != product_id][:limit]
+
+
+     async def delete_product(self, product_id: str) -> bool:
+          """Delete a product"""
+          result = await self.products_collection.delete_one({"_id": ObjectId(product_id)})
+          return result.deleted_count > 0
