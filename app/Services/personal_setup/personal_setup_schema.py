@@ -57,3 +57,11 @@ class UserSetup(BaseModel):
                     "injuries": "Recently My Finger is broken",
                }
           }
+
+
+class StrategyRoadmap(BaseModel):
+     daily_target_calories: dict = Field(..., example={"value": 1850, "unit": "kcal/day", "display_text": "Daily Fuel Intake", "description": "Calculated for a steady 0.5kg/week weight loss while maintaining energy for workouts."})
+     macro_targets: list[dict] = Field(..., example=[{"name":"protein",  "value": "138g", "description": "High protein to protect your muscles during weight loss."  },{"name":"carbs", "value": "185g", "description": "Complex carbs to fuel your 20-30 minute gym sessions." } ,{"name":"fats", "value": "51g", "description": "Healthy fats for hormonal balance and finger bone recovery." } ])
+     weekly_performance_goals: list[dict] = Field(..., example=[{"name":"exercise_burn", "value": 1200, "unit": "kcal/week", "display_text": "Weekly Activity Burn", "description": "Total calories to burn across your 4 gym sessions."},{"name":"sleep_target", "value": 8, "unit": "hours/night", "display_text": "Recovery Sleep", "description": "Critical for tissue repair (finger) and metabolic health."}])
+     injury_protocol: dict = Field(..., example={"status": "Active (Broken Finger)", "focus": "Hands-Free Hypertrophy", "description": "Your plan will exclude 'Grip' exercises. We will use Smith machines, leg presses, and seated core work to keep you safe."})
+     active_challenges: list[dict] = Field(..., example=[{"title": "The 20-30 Sprint", "description": "Complete all 4 sessions this week within your 30-minute window.", "reward": "Consistency Badge"},{"title": "Hydration Station", "description": "Drink 3 liters of water daily to support bone healing and digestion.", "reward": "100 XP"}])
