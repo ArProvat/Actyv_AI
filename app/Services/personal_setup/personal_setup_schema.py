@@ -59,6 +59,29 @@ class UserSetup(BaseModel):
           }
 
 
+
+class StrategyRoadmap(BaseModel):
+     daily_target_calories: List[dict] = Field(..., example=[
+          "value",
+          "unit",
+          "display_text",
+          "description"]),
+     macro_targets:List[dict] = Field(..., example=[
+          "name",
+          "value",
+          "description"]),
+     weekly_performance_goals:List[dict] = Field(..., example=[
+          "exercise_burn",
+          "sleep_target"]),
+     injury_protocol: dict = Field(..., example=[
+          "status",
+          "focus",
+          "description"]),
+     active_challenges: List[dict] = Field(..., example=[
+          "title",
+          "description",
+          "reward"])
+     
 class StrategyRoadmap(BaseModel):
      daily_target_calories: dict = Field(..., example={"value": 1850, "unit": "kcal/day", "display_text": "Daily Fuel Intake", "description": "Calculated for a steady 0.5kg/week weight loss while maintaining energy for workouts."})
      macro_targets: list[dict] = Field(..., example=[{"name":"protein",  "value": "138g", "description": "High protein to protect your muscles during weight loss."  },{"name":"carbs", "value": "185g", "description": "Complex carbs to fuel your 20-30 minute gym sessions." } ,{"name":"fats", "value": "51g", "description": "Healthy fats for hormonal balance and finger bone recovery." } ])
