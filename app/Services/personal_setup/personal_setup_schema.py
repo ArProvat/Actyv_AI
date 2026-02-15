@@ -57,3 +57,28 @@ class UserSetup(BaseModel):
                     "injuries": "Recently My Finger is broken",
                }
           }
+
+
+
+class StrategyRoadmap(BaseModel):
+     daily_target_calories: List[dict] = Field(..., example=[
+          "value",
+          "unit",
+          "display_text",
+          "description"]),
+     macro_targets:List[dict] = Field(..., example=[
+          "name",
+          "value",
+          "description"]),
+     weekly_performance_goals:List[dict] = Field(..., example=[
+          "exercise_burn",
+          "sleep_target"]),
+     injury_protocol: dict = Field(..., example=[
+          "status",
+          "focus",
+          "description"]),
+     active_challenges: List[dict] = Field(..., example=[
+          "title",
+          "description",
+          "reward"])
+     
