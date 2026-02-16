@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     AWS_REGION_NAME: str
     AWS_S3_BUCKET_NAME: str
 
+    EMBEDDING_CACHE_SIZE: int = 1000
+    EMBEDDING_CACHE_TTL: int = 3600*24 
+    
+    # Search settings
+    VECTOR_SEARCH_NUM_CANDIDATES_MULTIPLIER: int = 10
+    DEFAULT_MIN_SIMILARITY_SCORE: float = 0.3
+
     class Config:
         env_file = ".env"
 

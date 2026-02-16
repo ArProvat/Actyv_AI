@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from app.config.settings import settings
 from app.prompt.prompt import personal_setup_user_prompt, personal_setup_system_prompt
 from .personal_setup_schema import StrategyRoadmap
+from app.utils.embedding.embedding import LocalEmbeddingService
 from app.prompt.prompt import initial_planning_system_prompt, initial_planning_user_prompt
 from .personal_setup_schema import UserSetup, StrategyRoadmap
 
@@ -14,11 +15,13 @@ class personalSetup:
           self.mongodb = MongoDB()
           self.personal_collection = self.mongodb.personal_collection
           self.openai = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+          self.embedding_service = LocalEmbeddingService()
      
      async def create_personal_setup(self, user_id: str, personal_setup: UserSetup):
           try:
                personal_setup_dict = personal_setup.dict()
                personal_setup_dict["user_id"] = user_id
+               personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
                result = await self.personal_collection.insert_one(personal_setup_dict)
                return result._id
           except Exception as e:
