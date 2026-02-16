@@ -14,9 +14,9 @@ class personalSetup:
           self.openai = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
           self.embedding_service = LocalEmbeddingService()
      
-     async def create_personal_setup(self, user_id: str, personal_setup: UserSetup):
+     async def create_personal_setup(self, user_id: str, personal_setup: dict):
           try:
-               personal_setup_dict = personal_setup.dict()
+               personal_setup_dict = personal_setup
                personal_setup_dict["user_id"] = user_id
                personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
                result = await self.personal_collection.insert_one(personal_setup_dict)
@@ -31,9 +31,11 @@ class personalSetup:
           except Exception as e:
                raise HTTPException(status_code=400, detail=str(e))
      
-     async def update_personal_setup(self, user_id: str, personal_setup: UserSetup):
+     async def update_personal_setup(self, user_id: str, personal_setup: dict):
           try:
-               personal_setup_dict = personal_setup.dict()
+               personal_setup_dict = personal_setup
+               personal_setup_dict["user_id"] = user_id
+               personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
                result = await self.personal_collection.update_one({"user_id": user_id}, {"$set": personal_setup_dict})
                
                return result.modified_count
@@ -46,12 +48,13 @@ class personalSetup:
           return system_prompt, user_prompt
 
 
-
-
      async def get_response(self, user_id: str, new_personal_setup: dict):
           try:
-               result = await self.personal_collection.find_one({"user_id": user_id})
-
+               existing_personal_setup = await self.personal_collection.find_one({"user_id": user_id})
+               if existing_personal_setup:
+                    await self.update_personal_setup(user_id, new_personal_setup)
+               else:
+                    await self.create_personal_setup(user_id, new_personal_setup)
                system_prompt ,user_prompt = await self.get_prompt(new_personal_setup)
                
                completions = await self.openai.chat.completions.create(
