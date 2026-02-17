@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from typing import Optional, List
 from app.Services.products.products import ProductService
 
-router = APIRouter(prefix="/products", tags=["products"])
+router = APIRouter()
 
 @router.get("/search")
 async def search_products(

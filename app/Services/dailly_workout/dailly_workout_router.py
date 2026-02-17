@@ -6,7 +6,7 @@ router = APIRouter()
 
 
 @router.get("/daily_workout",response_model=WorkoutSession)
-async def get_daily_workout(user_id:str = Depends(get_user_id)):
+async def get_daily_workout(user_id:str):
      try:
           return await DailyWorkout().get_response(user_id)
      except Exception as e:

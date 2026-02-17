@@ -55,10 +55,10 @@ async def chat_endpoint(request: ChatRequest):
 
 @router.post("/api/chat")
 async def chat_with_file_endpoint(
+     user_id: str,
      query: str = Form(...),
      file: Optional[UploadFile] = File(None),
-     session_id: Optional[str] = Form(None),
-     user: Depends(verify_token)
+     session_id: Optional[str] = Form(None)
 ):
      """
      Chat endpoint with optional file upload
@@ -73,7 +73,7 @@ async def chat_with_file_endpoint(
      """
      file_bytes = None
      file_extension = None
-     user_id = user["user_id"]
+     user_id = user_id
      if file:
           file_bytes = await file.read()
           if file.filename:
@@ -104,14 +104,14 @@ async def chat_with_file_endpoint(
 
 
 @router.get("/api/sessions")
-async def get_user_sessions(user: Depends(verify_token)):
+async def get_user_sessions(user_id:str):
      """
      Get all sessions for a user
 
      Returns:
           List of sessions with session_id, title, created_at, updated_at
      """
-     user_id = user["user_id"]
+     user_id = user_id
      try:
           sessions = await ai_coach.get_user_sessions(user_id)
           return JSONResponse(
@@ -124,14 +124,14 @@ async def get_user_sessions(user: Depends(verify_token)):
 
 
 @router.get("/api/messages/{session_id}")
-async def get_session_messages(session_id: str, user: Depends(verify_token)):
+async def get_session_messages(session_id: str, user_id:str):
      """
      Get all messages for a session
 
      Returns:
           List of messages with role, content, timestamp
      """
-     user_id = user["user_id"]
+     user_id = user_id
      try:
           messages = await ai_coach.get_chat_history(session_id, user_id)
           return JSONResponse(
@@ -144,14 +144,14 @@ async def get_session_messages(session_id: str, user: Depends(verify_token)):
 
 
 @router.delete("/api/sessions/{session_id}")
-async def delete_session(session_id: str, user: Depends(verify_token)):
+async def delete_session(session_id: str, user_id):
      """
      Delete a session and all its messages
 
      Form data:
           - user_id: User identifier for authorization
      """
-     user_id = user["user_id"]
+     user_id =user_id
      try:
           await ai_coach.delete_session(session_id, user_id)
           return JSONResponse(

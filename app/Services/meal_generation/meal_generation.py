@@ -13,10 +13,11 @@ class MealGeneration:
      async def get_prompt(self,user_id:str):
           meal = await self.db.get_meal(user_id)
           workout = await self.db.get_workout(user_id)
+          print(f"meal{meal} workout{workout}")
           if not meal or not workout:
                meal="not found previous 3 days meals"
                workout="not found previous 3 days workouts"
-          system_prompt = Meal_system_prompt.format(workout_schema=DailyMealLog.model_json_schema())
+          system_prompt = Meal_system_prompt.format(meal_schema=DailyMealLog.model_json_schema())
           user_prompt = Meal_user_prompt.format(meals=meal,workouts=workout)
           return system_prompt,user_prompt
      

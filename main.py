@@ -4,6 +4,7 @@ from app.Services.AI_coach.AI_coach_router import router as AI_coach_router
 from app.Services.meal_generation.meal_generation_router import router as meal_generation_router
 from app.Services.dailly_workout.dailly_workout_router import router as daily_workout_router
 from app.Services.products.products_router import router as product_router
+from app.Services.personal_setup.personal_setup_router import router as personal_setup_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.DB.mongodb.mongodb import MongoDB
 
@@ -27,6 +28,7 @@ app.include_router(food_scan_router,prefix="/v1",tags=["Food-scan"])
 app.include_router(AI_coach_router,prefix="/v1",tags=["AI-coach"])
 app.include_router(meal_generation_router,prefix="/v1",tags=["Meal-generation"])
 app.include_router(daily_workout_router,prefix="/v1",tags=["Daily-workout"])
+app.include_router(personal_setup_router,prefix="/v1",tags=["Personal-setup"])
 app.include_router(product_router,prefix="/v1",tags=["Product"])
 
 

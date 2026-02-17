@@ -360,7 +360,7 @@ class ProductService:
                     if result not in diverse_results:
                          diverse_results.append(result)
                          if len(diverse_results) >= limit:
-                         break
+                              break
           
           return diverse_results[:limit]
      

@@ -1,9 +1,8 @@
 
-
 from fastapi import APIRouter, Depends, HTTPException
 from app.Services.personal_setup.personal_setup import personalSetup
 from app.Services.personal_setup.personal_setup_schema import UserSetup
-from app.utils.auth.auth import get_current_user
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
 
@@ -15,7 +14,8 @@ async def get_response(user_id: str, personal_setup: UserSetup):
 
 @router.get("/personal-setup/{user_id}")
 async def get_personal_setup(user_id: str,):
-     return await personal_setup.get_personal_setup(user_id)
+     result = await personal_setup.get_personal_setup(user_id)
+     return jsonable_encoder(result)
 
 @router.put("/personal-setup/{user_id}")
 async def update_personal_setup(user_id: str, personal_setup: UserSetup):

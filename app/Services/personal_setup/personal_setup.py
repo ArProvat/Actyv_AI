@@ -6,37 +6,49 @@ from app.config.settings import settings
 from app.prompt.prompt import personal_setup_user_prompt, personal_setup_system_prompt
 from .personal_setup_schema import StrategyRoadmap
 from app.utils.embedding.embedding import LocalEmbeddingService
-
+from bson import ObjectId
+from bson.errors import InvalidId
 class personalSetup:
      def __init__(self):
           self.mongodb = MongoDB()
-          self.personal_collection = self.mongodb.personal_collection
+          self.personal_collection = self.mongodb.personal_setup_collection
           self.openai = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
           self.embedding_service = LocalEmbeddingService()
      
      async def create_personal_setup(self, user_id: str, personal_setup: dict):
           try:
                personal_setup_dict = personal_setup
-               personal_setup_dict["user_id"] = user_id
+               personal_setup_dict["user_id"] = ObjectId(user_id)
                personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
                result = await self.personal_collection.insert_one(personal_setup_dict)
-               return result._id
+               return result.inserted_id
           except Exception as e:
                raise HTTPException(status_code=400, detail=str(e))
      
+
      async def get_personal_setup(self, user_id: str):
           try:
-               result = await self.personal_collection.find_one({"user_id": user_id})
+               # 1. Convert string to ObjectId for the query
+               oid = ObjectId(user_id)
+               
+               result = await self.personal_collection.find_one({"user_id": oid})
+               
+               if result:
+                    result["_id"] = str(result["_id"])
+                    if isinstance(result.get("user_id"), ObjectId):
+                         result["user_id"] = str(result["user_id"])
+                         
                return result
+          except InvalidId:
+               raise HTTPException(status_code=400, detail="Invalid ID format")
           except Exception as e:
-               raise HTTPException(status_code=400, detail=str(e))
-     
+               raise HTTPException(status_code=500, detail=str(e))
      async def update_personal_setup(self, user_id: str, personal_setup: dict):
           try:
                personal_setup_dict = personal_setup
                personal_setup_dict["user_id"] = user_id
                personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
-               result = await self.personal_collection.update_one({"user_id": user_id}, {"$set": personal_setup_dict})
+               result = await self.personal_collection.update_one({"user_id": ObjectId(user_id)}, {"$set": personal_setup_dict})
                
                return result.modified_count
           except Exception as e:
@@ -50,7 +62,7 @@ class personalSetup:
 
      async def get_response(self, user_id: str, new_personal_setup: dict):
           try:
-               existing_personal_setup = await self.personal_collection.find_one({"user_id": user_id})
+               existing_personal_setup = await self.personal_collection.find_one({"user_id": ObjectId(user_id)})
                if existing_personal_setup:
                     await self.update_personal_setup(user_id, new_personal_setup)
                else:
