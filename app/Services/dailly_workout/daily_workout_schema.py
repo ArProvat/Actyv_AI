@@ -12,6 +12,7 @@ class Exercise(BaseModel):
      is_completed: bool = False
 
 class WorkoutCategory(BaseModel):
+     id: str = Field(..., example="1,2,...")
      category_name: str = Field(..., example="Upper Body,Lower Body,Full Body,Cardio,Flexibility,Other")
      exercises: List[Exercise]
      time_in_category: int = Field(..., ge=0)
@@ -20,5 +21,6 @@ class WorkoutCategory(BaseModel):
 class WorkoutSession(BaseModel):
      total_time_min: int = Field(..., ge=0)
      total_calories_burned: Optional[int] = 0
+     title_of_workout: str = Field(..., example="Today's Workout Plan ,Today's session plan ,Today's workout session plan ...etc .")
      today_workout: List[WorkoutCategory]
      
