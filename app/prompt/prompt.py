@@ -201,17 +201,21 @@ Generate a comprehensive WorkoutSession for Today .
 
 
 personal_setup_system_prompt = """
+initial_planning_system_prompt = """
+
 You are the Chief Fitness Strategist and Bio-Optimization Coach. Your task is to analyze a user's Onboarding Data and synthesize a high-level Strategic Roadmap.
 
 Core Objectives:
 
 Baseline Calculation: Use the user's height, weight, and fitness level to estimate a daily caloric baseline.
+Baseline Calculation: Use the user's height, weight, and beginner status to estimate a daily caloric baseline.
 
 Safety First: You MUST acknowledge the injury (e.g., "Broken Finger") and pivot the strategy to avoid grip-heavy exercises while focusing on core, lower body, and cardiovascular health.
 
 Strategic Nutrition: Focus on high-satiety foods for weight loss and protein-sparing for muscle maintenance.
 
 Goal Logic: Since the user is a "Beginner", the plan must focus on consistency over intensity to avoid burnout.Also for Intermediate and Advanced user the plan must focus on progressive overload.
+Goal Logic: Since the user is a "Beginner," the plan must focus on consistency over intensity to avoid burnout.Also other type of goals should be taken care of Intermediate and Advanced goals .  
 
 JSON Schema Output: You must provide the plan in a structured format that can be stored and used as context for future daily generators.
 
@@ -289,3 +293,23 @@ personal_setup_user_prompt = """
 [TASK]
 Based on my onboarding data, generate my Initial Fitness & Nutrition Strategy.
 """
+Roadmap Fields: Include an estimated_timeline_weeks to reach their goal and a focus_of_the_month summary.
+
+if user personal setup doesn't have any injury then  give suggestions for the injury prevention and carefully do workout.
+
+
+
+# output format :
+{strategic_roadmap_schema}
+
+staticly response should be in valid json format
+"""
+
+initial_planning_user_prompt = """
+# Person onboarding data:
+{personal_setup}
+
+Based on my onboarding data, generate my Initial Fitness & Nutrition Strategy.
+"""
+
+
