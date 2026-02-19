@@ -25,7 +25,7 @@ async def chat_endpoint(request: ChatRequest):
      Request body:
           {
                "query": "Hello, I need help with my workout",
-               "user_id": "user123",
+               "userId": "user123",
                "session_id": "session456"
           }
      """
@@ -33,7 +33,7 @@ async def chat_endpoint(request: ChatRequest):
           try:
                async for chunk in ai_coach.get_response(
                     query=request.query,
-                    user_id=request.user_id,
+                    userId=request.userId,
                     session_id=request.session_id
                ):
                     # Send as Server-Sent Events format
@@ -55,10 +55,10 @@ async def chat_endpoint(request: ChatRequest):
 
 @router.post("/api/chat")
 async def chat_with_file_endpoint(
+     userId: str,
      query: str = Form(...),
      file: Optional[UploadFile] = File(None),
-     session_id: Optional[str] = Form(None),
-     user: Depends(verify_token)
+     session_id: Optional[str] = Form(None)
 ):
      """
      Chat endpoint with optional file upload
@@ -66,14 +66,14 @@ async def chat_with_file_endpoint(
      Form data:
           - query: User's message
           - file: Optional uploaded file
-          - user_id: User identifier (required for saving)
+          - userId: User identifier (required for saving)
           - session_id: Session identifier (auto-generated if not provided)
 
      Returns streaming response with text and optionally images
      """
      file_bytes = None
      file_extension = None
-     user_id = user["user_id"]
+     userId = userId
      if file:
           file_bytes = await file.read()
           if file.filename:
@@ -85,7 +85,7 @@ async def chat_with_file_endpoint(
                     query=query,
                     file=file_bytes,
                     file_extension=file_extension,
-                    user_id=user_id,
+                    userId=userId,
                     session_id=session_id,
                ):
                     yield f"data: {json.dumps(chunk)}\n\n"
@@ -104,16 +104,16 @@ async def chat_with_file_endpoint(
 
 
 @router.get("/api/sessions")
-async def get_user_sessions(user: Depends(verify_token)):
+async def get_user_sessions(userId:str):
      """
      Get all sessions for a user
 
      Returns:
           List of sessions with session_id, title, created_at, updated_at
      """
-     user_id = user["user_id"]
+     userId = userId
      try:
-          sessions = await ai_coach.get_user_sessions(user_id)
+          sessions = await ai_coach.get_user_sessions(userId)
           return JSONResponse(
                content={"success": True, "sessions": jsonable_encoder(sessions)}
           )
@@ -124,16 +124,16 @@ async def get_user_sessions(user: Depends(verify_token)):
 
 
 @router.get("/api/messages/{session_id}")
-async def get_session_messages(session_id: str, user: Depends(verify_token)):
+async def get_session_messages(session_id: str, userId:str):
      """
      Get all messages for a session
 
      Returns:
           List of messages with role, content, timestamp
      """
-     user_id = user["user_id"]
+     userId = userId
      try:
-          messages = await ai_coach.get_chat_history(session_id, user_id)
+          messages = await ai_coach.get_chat_history(session_id, userId)
           return JSONResponse(
                content={"success": True, "messages": jsonable_encoder(messages)}
           )
@@ -144,16 +144,16 @@ async def get_session_messages(session_id: str, user: Depends(verify_token)):
 
 
 @router.delete("/api/sessions/{session_id}")
-async def delete_session(session_id: str, user: Depends(verify_token)):
+async def delete_session(session_id: str, userId:str):
      """
      Delete a session and all its messages
 
      Form data:
-          - user_id: User identifier for authorization
+          - userId: User identifier for authorization
      """
-     user_id = user["user_id"]
+     userId =userId
      try:
-          await ai_coach.delete_session(session_id, user_id)
+          await ai_coach.delete_session(session_id, userId)
           return JSONResponse(
                content={"success": True, "message": "Session deleted successfully"}
           )

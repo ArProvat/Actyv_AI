@@ -23,7 +23,7 @@ class AI_coach:
           query: str,
           file: bytes | None = None,
           file_extension: str | None = None,
-          user_id: str | None = None,
+          userId: str | None = None,
           session_id: str | None = None
           ):
           """
@@ -33,8 +33,8 @@ class AI_coach:
           if not session_id:
                session_id = str(uuid.uuid4())
           
-          if not user_id:
-               user_id = "anonymous"
+          if not userId:
+               userId = "anonymous"
           
           message_content = query
           
@@ -61,7 +61,7 @@ class AI_coach:
           config = {
                "configurable": {
                     "thread_id": session_id,
-                    "user_id": user_id
+                    "userId": userId
                }
           }
           
@@ -155,7 +155,7 @@ class AI_coach:
                     # Create or update session with title if generated
                     if generated_title:
                          await self.db.create_session(
-                              user_id=user_id,
+                              userId=userId,
                               session_id=session_id,
                               title=generated_title
                          )
@@ -163,7 +163,7 @@ class AI_coach:
                     # Save the conversation turn
                     await self.db.save_conversation_turn(
                          session_id=session_id,
-                         user_id=user_id,
+                         userId=userId,
                          user_message=query,  # Original query text
                          assistant_message=assistant_response,
                          user_image_url= None,
@@ -180,10 +180,10 @@ class AI_coach:
           """Retrieve chat history for a session"""
           return await self.db.get_messages(session_id)
      
-     async def get_user_sessions(self, user_id: str):
+     async def get_user_sessions(self, userId: str):
           """Retrieve all sessions for a user"""
-          return await self.db.get_sessions(user_id)
+          return await self.db.get_sessions(userId)
      
-     async def delete_session(self, session_id: str, user_id: str):
+     async def delete_session(self, session_id: str, userId: str):
           """Delete a session"""
-          await self.db.delete_session(session_id, user_id)
+          await self.db.delete_session(session_id, userId)

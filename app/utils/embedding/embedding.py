@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Tuple
 import hashlib
 from functools import lru_cache
 import torch
+import asyncio
 
 class LocalEmbeddingService:
      def __init__(self, model_name: str = "all-MiniLM-L6-v2"):

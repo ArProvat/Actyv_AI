@@ -10,19 +10,21 @@ class MealGeneration:
           self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
           self.db = MongoDB()
      
-     async def get_prompt(self,user_id:str):
-          meal = await self.db.get_meal(user_id)
-          workout = await self.db.get_workout(user_id)
+     async def get_prompt(self,userId:str):
+          personal_strategy_roadmap = await self.db.get_strategy_roadmap(userId)
+          meal = await self.db.get_meal(userId)
+          workout = await self.db.get_workout(userId)
+          print(f"meal{meal} workout{workout}")
           if not meal or not workout:
                meal="not found previous 3 days meals"
                workout="not found previous 3 days workouts"
-          system_prompt = Meal_system_prompt.format(workout_schema=DailyMealLog.model_json_schema())
-          user_prompt = Meal_user_prompt.format(meals=meal,workouts=workout)
+          system_prompt = Meal_system_prompt.format(meal_schema=DailyMealLog.model_json_schema())
+          user_prompt = Meal_user_prompt.format(meals=meal,workouts=workout,personal_strategy_roadmap=personal_strategy_roadmap)
           return system_prompt,user_prompt
      
-     async def get_response(self,user_id:str):
+     async def get_response(self,userId:str):
           try:
-               system_prompt,user_prompt = await self.get_prompt(user_id)
+               system_prompt,user_prompt = await self.get_prompt(userId)
                completions = await self.client.chat.completions.create(
                     model="gpt-5-mini",
                     messages=[

@@ -140,6 +140,9 @@ Macro-Syncing: Map specific food items to categories: Morning, Lunch, Pre-Workou
 
 Tone: Be professional, encouraging, and slightly witty. Brief insights on why you chose specific foods (e.g., "Adding spinach for nitrates to boost blood flow during that bench press") are encouraged.
 
+# Meal response calculation must be based on input from personal strategy roadmap 
+# total calories, fat_g, carbs_g, protein_g must be calculated based on user's personal strategy roadmap
+
 Output Format: Strictly return valid JSON following schema
 {meal_schema}
 
@@ -152,6 +155,7 @@ Context: 3-Day History & Today's Plan
 
 [PREVIOUS 2 DAYS WORKOUTS AND TODAY'S WORKOUT] {workouts}
 
+[Personal strategy roadmap] {personal_strategy_roadmap}
 
 Instructions: Based on the data above, the user has a workout focused on today.
 
@@ -182,6 +186,10 @@ Schema Compliance: You must output only a valid JSON object that matches the Wor
 
 Logic: Calculate total_time_min and total_calories_burned based on the intensity and volume of the generated exercises.
 
+# Workout response calculation must be based on input from personal strategy roadmap 
+# total_calories_burned must be calculated based on user's personal strategy roadmap
+# sequence of exercises must be based on muscle fatigue analysis and progressive overload and calories_burned_in_category must be equal.
+
 Return the workout plan as a single JSON object.
 
 {workout_schema}
@@ -195,12 +203,13 @@ Workout_user_prompt = """
 
 [WORKOUT HISTORY: PAST 3 DAYS] {past_3_days_workouts}
 
+
+
 Generate a comprehensive WorkoutSession for Today .
 
 """
 
 
-personal_setup_system_prompt = """
 initial_planning_system_prompt = """
 
 You are the Chief Fitness Strategist and Bio-Optimization Coach. Your task is to analyze a user's Onboarding Data and synthesize a high-level Strategic Roadmap.
@@ -208,14 +217,13 @@ You are the Chief Fitness Strategist and Bio-Optimization Coach. Your task is to
 Core Objectives:
 
 Baseline Calculation: Use the user's height, weight, and fitness level to estimate a daily caloric baseline.
-Baseline Calculation: Use the user's height, weight, and beginner status to estimate a daily caloric baseline.
+Baseline Calculation: Use the user's height, weight, and beginner status to estimate a daily macro baseline.
 
 Safety First: You MUST acknowledge the injury (e.g., "Broken Finger") and pivot the strategy to avoid grip-heavy exercises while focusing on core, lower body, and cardiovascular health.
 
 Strategic Nutrition: Focus on high-satiety foods for weight loss and protein-sparing for muscle maintenance.
 
 Goal Logic: Since the user is a "Beginner", the plan must focus on consistency over intensity to avoid burnout.Also for Intermediate and Advanced user the plan must focus on progressive overload.
-Goal Logic: Since the user is a "Beginner," the plan must focus on consistency over intensity to avoid burnout.Also other type of goals should be taken care of Intermediate and Advanced goals .  
 
 JSON Schema Output: You must provide the plan in a structured format that can be stored and used as context for future daily generators.
 
@@ -227,51 +235,50 @@ Weekly Metrics: Define weekly_cal_burn_goal, target_sleep_hours, and total_weekl
 
 Roadmap Fields: Include an estimated_timeline_weeks to reach their goal and a focus_of_the_month summary
 example:
-{
-        "daily_target_calories": {
+{{
+        "daily_target_calories": {{
             "value": 1850,
             "unit": "kcal",
             "display_text": "Daily Fuel Intake",
             "description": "Calculated for a steady 0.5kg/week weight loss while maintaining energy for workouts."
-        },
-        "macro_targets": [
-            ["name":"protein", "value": "138g", "description": "High protein to protect your muscles during weight loss."] 
-            ["name":"carbs", "value": "185g", "description": "Complex carbs to fuel your 20-30 minute gym sessions." ]
-            ["name":"fats", "value": "51g", "description": "Healthy fats for hormonal balance and finger bone recovery." ]
+        }},
+        "daily_macro_targets": [
+            {{"name":"protein", "value": "138g", "description": "High protein to protect your muscles during weight loss."}} 
+            {{"name":"carbs", "value": "185g", "description": "Complex carbs to fuel your 20-30 minute gym sessions."}}
+            {{"name":"fats", "value": "51g", "description": "Healthy fats for hormonal balance and finger bone recovery."}}
         ],
         "weekly_performance_goals": [
-            ["exercise_burn": {
+            {{"exercise_burn": {{
             "value": 1200,
             "unit": "kcal",
             "display_text": "Weekly Activity Burn",
             "description": "Total calories to burn across your 4 gym sessions."
-            }],
-            ["sleep_target": {
+            }}}},
+            {{"sleep_target": {{
             "value": 8,
             "unit": "hours/night",
             "display_text": "Recovery Sleep",
             "description": "Critical for tissue repair (finger) and metabolic health."
-            }]
+            }}}}
         ],
-        "injury_protocol": {
+        "injury_protocol": {{
             "status": "Active (Broken Finger)",
             "focus": "Hands-Free Hypertrophy",
             "description": "Your plan will exclude 'Grip' exercises. We will use Smith machines, leg presses, and seated core work to keep you safe."
-        },
+        }},
         "active_challenges": [
-            [
+            {{
             "title": "The 20-30 Sprint",
             "description": "Complete all 4 sessions this week within your 30-minute window.",
             "reward": "Consistency Badge"
-            ],
-            [
+            }},
+            {{
             "title": "Hydration Station",
             "description": "Drink 3 liters of water daily to support bone healing and digestion.",
             "reward": "100 XP"
-            ]
+            }}
         ]
-        }
-}   
+}}   
 
 # Output should be in this given json format:
 {plan_schema}
@@ -286,24 +293,6 @@ if user provided onboarding data injury field is empty, then injury_protocol sho
 
 """
 
-personal_setup_user_prompt = """
-[ONBOARDING DATA]
-{personal_setup}
-
-[TASK]
-Based on my onboarding data, generate my Initial Fitness & Nutrition Strategy.
-"""
-Roadmap Fields: Include an estimated_timeline_weeks to reach their goal and a focus_of_the_month summary.
-
-if user personal setup doesn't have any injury then  give suggestions for the injury prevention and carefully do workout.
-
-
-
-# output format :
-{strategic_roadmap_schema}
-
-staticly response should be in valid json format
-"""
 
 initial_planning_user_prompt = """
 # Person onboarding data:
