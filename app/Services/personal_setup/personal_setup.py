@@ -9,6 +9,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from app.prompt.prompt import initial_planning_system_prompt, initial_planning_user_prompt
 import json
+from datetime import datetime, timezone
 
 class personalSetup:
      def __init__(self):
@@ -17,16 +18,21 @@ class personalSetup:
           self.openai = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
           self.embedding_service = LocalEmbeddingService()
      
+
      async def create_personal_setup(self, userId: str, personal_setup: dict):
           try:
+               now = datetime.now(timezone.utc) # Use UTC for consistency
                personal_setup_dict = personal_setup
-               personal_setup_dict["userId"] = ObjectId(userId)  # uncomment this
+               
+               personal_setup_dict["userId"] = ObjectId(userId)
+               # Add timestamps here
+               personal_setup_dict["createdAt"] = now
+               personal_setup_dict["updatedAt"] = now
+               
                result = await self.personal_collection.insert_one(personal_setup_dict)
-               return result.inserted_id
+               return str(result.inserted_id) # Return as string to avoid the ObjectId error we discussed earlier
           except Exception as e:
                raise HTTPException(status_code=400, detail=str(e))
-     
-
      async def get_personal_setup(self, userId: str):
           try:
                # 1. Convert string to ObjectId for the query
@@ -46,6 +52,7 @@ class personalSetup:
                raise HTTPException(status_code=500, detail=str(e))
      async def update_personal_setup(self, userId: str, personal_setup: dict):
           try:
+               personal_setup["updatedAt"] = datetime.now(timezone.utc)
                result = await self.personal_collection.update_one(
                     {"userId": ObjectId(userId)}, {"$set": personal_setup}
                )
