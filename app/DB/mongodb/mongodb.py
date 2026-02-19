@@ -21,14 +21,14 @@ class MongoDB:
      async def init_indexes(self):
           """Initialize database indexes - call this on app startup"""
           # Session indexes
-          await self.session_collection.create_index([("session_id", 1), ("user_id", 1)], unique=True)
+          await self.session_collection.create_index([("session_id", 1), ("userId", 1)], unique=True)
           
           # Message indexes
           await self.message_collection.create_index([("session_id", 1), ("timestamp", 1)])
-          await self.message_collection.create_index("user_id")
+          await self.message_collection.create_index("userId")
           
           # User Specific indexes
-          await self.personal_setup_collection.create_index("user_id")
+          await self.personal_setup_collection.create_index("userId")
           
           # Product indexes
           await self.product_collection.create_index("vendor_id")
@@ -36,8 +36,8 @@ class MongoDB:
           await self.product_collection.create_index("status")
           
           # Meal & Workout Unique Daily indexes
-          await self.meal_collection.create_index([("date", 1), ("user_id", 1)], unique=True)
-          await self.workout_collection.create_index([("date", 1), ("user_id", 1)], unique=True)
+          await self.meal_collection.create_index([("date", 1), ("userId", 1)], unique=True)
+          await self.workout_collection.create_index([("date", 1), ("userId", 1)], unique=True)
           
           # Vector search initialization
           try:
@@ -85,10 +85,10 @@ class MongoDB:
                     print("Vector search index already exists.")
                else:
                     print(f"Failed to create search index: {e}")
-     async def get_sessions(self, user_id: str) -> List[Dict]:
+     async def get_sessions(self, userId: str) -> List[Dict]:
           """Get all sessions for a user"""
           cursor = self.session_collection.find(
-               {"user_id": ObjectId(user_id)},
+               {"userId": ObjectId(userId)},
                {"_id": 0, "session_id": 1, "title": 1, "created_at": 1, "updated_at": 1}
           ).sort("updated_at", -1)
           return await cursor.to_list(length=100)
@@ -101,10 +101,10 @@ class MongoDB:
           ).sort("timestamp", 1)
           return await cursor.to_list(length=1000)
      
-     async def create_session(self, user_id: str, session_id: str, title: str = "New Conversation"):
+     async def create_session(self, userId: str, session_id: str, title: str = "New Conversation"):
           """Create a new session"""
           session_doc = {
-               "user_id": ObjectId(user_id),
+               "userId": ObjectId(userId),
                "session_id": ObjectId(session_id),
                "title": title,
                "created_at": datetime.utcnow(),
@@ -132,7 +132,7 @@ class MongoDB:
      async def save_message(
           self, 
           session_id: str, 
-          user_id: str,
+          userId: str,
           role: str, 
           content: str,
           image_url: Optional[str] = None
@@ -140,7 +140,7 @@ class MongoDB:
           """Save a single message (user or assistant)"""
           message_doc = {
                "session_id": ObjectId(session_id),
-               "user_id": ObjectId(user_id),
+               "userId": ObjectId(userId),
                "role": role,  # "user" or "assistant"
                "content": content,
                "timestamp": datetime.utcnow()
@@ -157,7 +157,7 @@ class MongoDB:
      async def save_conversation_turn(
           self,
           session_id: str,
-          user_id: str,
+          userId: str,
           user_message: str,
           assistant_message: str,
           user_image_url: Optional[str] = None,
@@ -167,7 +167,7 @@ class MongoDB:
           # Save user message
           await self.save_message(
                session_id=ObjectId(session_id),
-               user_id=ObjectId(user_id),
+               userId=ObjectId(userId),
                role="user",
                content=user_message,
                image_url=user_image_url
@@ -176,42 +176,48 @@ class MongoDB:
           # Save assistant message
           await self.save_message(
                session_id=ObjectId(session_id),
-               user_id=ObjectId(user_id),
+               userId=ObjectId(userId),
                role="assistant",
                content=assistant_message,
                image_url=assistant_image_url
           )
      
-     async def delete_session(self, session_id: str, user_id: str):
+     async def delete_session(self, session_id: str, userId: str):
           """Delete a session and all its messages"""
           await self.session_collection.delete_one({
                "session_id": ObjectId(session_id),
-               "user_id": ObjectId(user_id)
+               "userId": ObjectId(userId)
           })
           await self.message_collection.delete_many({
                "session_id": ObjectId(session_id),
-               "user_id": ObjectId(user_id)
+               "userId": ObjectId(userId)
           })
      
      
-     async def get_meal(self, user_id: str):
+     async def get_meal(self, userId: str):
           cursor = self.meal_collection.find(
-               {"user_id": ObjectId(user_id)},
+               {"userId": ObjectId(userId)},
                {"meals": 1}
           ).sort("created_at", -1).limit(3)
           return await cursor.to_list(length=3)
 
-     async def get_workout(self, user_id: str):
+     async def get_workout(self, userId: str):
           cursor = self.workout_collection.find(
-               {"user_id": ObjectId(user_id)},
+               {"userId": ObjectId(userId)},
                {"workoutCategories": 1}
           ).sort("created_at", -1).limit(3)
           return await cursor.to_list(length=3)
 
-     async def get_personal_setup(self, user_id: str):
+     async def get_personal_setup(self, userId: str):
           cursor = self.personal_setup_collection.find(
-               {"user_id": ObjectId(user_id)},
+               {"userId": ObjectId(userId)},
                {"personal_setup": 1}
           ).sort("created_at", -1).limit(1)
           return await cursor.to_list(length=1)
 
+     async def get_strategy_roadmap(self, userId: str):
+          cursor = self.personal_setup_collection.find(
+               {"userId": ObjectId(userId)},
+               {"strategy_roadmap": 1}
+          ).sort("created_at", -1).limit(1)
+          return await cursor.to_list(length=1)

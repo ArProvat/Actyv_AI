@@ -55,9 +55,9 @@ class ProductService:
           )
           return True
      
-     async def get_personal_setup(self, user_id: str) -> Dict:
+     async def get_personal_setup(self, userId: str) -> Dict:
           """Get user's personal setup/preferences"""
-          user = await self.users_collection.find_one({"_id": ObjectId(user_id)})
+          user = await self.users_collection.find_one({"_id": ObjectId(userId)})
           
           if not user:
                return self._get_default_setup()
@@ -80,7 +80,7 @@ class ProductService:
      
      async def search_by_text_query(
           self,
-          user_id: str,
+          userId: str,
           query: str,
           limit: int = 10,
           filters: Optional[Dict[str, Any]] = None,
@@ -98,7 +98,7 @@ class ProductService:
           """
           
           # Get user preferences
-          personal_setup = await self.get_personal_setup(user_id)
+          personal_setup = await self.get_personal_setup(userId)
           
           # Strategy 1: Main personalized search
           main_results = await self._personalized_vector_search(
@@ -111,7 +111,7 @@ class ProductService:
           )
           
           # Strategy 2: Get user's interaction history for personalization boost
-          user_history = await self._get_user_history(user_id)
+          user_history = await self._get_user_history(userId)
           
           # Strategy 3: Hybrid re-ranking
           reranked_results = await self._hybrid_rerank(
@@ -123,7 +123,7 @@ class ProductService:
           )
           
           # Log search for analytics
-          await self._log_search(user_id, query, len(reranked_results))
+          await self._log_search(userId, query, len(reranked_results))
           
           return reranked_results
      
@@ -157,12 +157,12 @@ class ProductService:
                min_score=min_score
           )
      
-     async def _get_user_history(self, user_id: str, days: int = 90) -> Dict:
+     async def _get_user_history(self, userId: str, days: int = 90) -> Dict:
           """Get user's interaction history for personalization"""
           cutoff_date = datetime.utcnow() - timedelta(days=days)
           
           interactions = await self.interactions_collection.find({
-               "user_id": user_id,
+               "userId": userId,
                "timestamp": {"$gte": cutoff_date}
           }).to_list(None)
           
@@ -465,10 +465,10 @@ class ProductService:
           
           return filtered[:limit]
      
-     async def _log_search(self, user_id: str, query: str, result_count: int):
+     async def _log_search(self, userId: str, query: str, result_count: int):
           """Log search for analytics and improvement"""
           await self.interactions_collection.insert_one({
-               "user_id": user_id,
+               "userId": userId,
                "interaction_type": "search",
                "query": query,
                "result_count": result_count,
@@ -477,7 +477,7 @@ class ProductService:
      
      async def log_product_interaction(
           self,
-          user_id: str,
+          userId: str,
           product_id: str,
           interaction_type: str,  # 'view', 'click', 'purchase', 'add_to_cart'
           metadata: Optional[Dict] = None
@@ -487,7 +487,7 @@ class ProductService:
           product = await self.products_collection.find_one({"_id": ObjectId(product_id)})
           
           interaction = {
-               "user_id": user_id,
+               "userId": userId,
                "product_id": product_id,
                "interaction_type": interaction_type,
                "category": product.get('category') if product else None,

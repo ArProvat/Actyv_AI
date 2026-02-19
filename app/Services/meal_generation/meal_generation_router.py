@@ -8,8 +8,8 @@ router = APIRouter()
 meal_generation = MealGeneration()
 
 @router.post("/meal_generation")
-async def meal_generation_router(user_id:str):
+async def meal_generation_router(userId:str):
      try:
-          return await meal_generation.get_response(user_id)
+          return await meal_generation.get_response(userId)
      except Exception as e:
           return HTTPException(status_code=500,detail=str(e))

@@ -7,7 +7,7 @@ router = APIRouter()
 @router.get("/search")
 async def search_products(
      query: str = Query(..., description="Search query"),
-     user_id: str = Query(..., description="User ID for personalization"),
+     userId: str = Query(..., description="User ID for personalization"),
      limit: int = Query(10, ge=1, le=50),
      category: Optional[str] = None,
      min_price: Optional[float] = None,
@@ -20,7 +20,7 @@ async def search_products(
      Enhanced personalized search endpoint
      
      - **query**: What the user is searching for
-     - **user_id**: User ID to personalize results
+     - **userId**: User ID to personalize results
      - **use_personalization**: Toggle personalization on/off
      """
      
@@ -36,7 +36,7 @@ async def search_products(
           filters['min_rating'] = min_rating
      
      results = await service.search_by_text_query(
-          user_id=user_id,
+          userId=userId,
           query=query,
           limit=limit,
           filters=filters if filters else None,
@@ -71,7 +71,7 @@ async def get_similar_products(
 
 @router.post("/interactions")
 async def log_interaction(
-     user_id: str,
+     userId: str,
      product_id: str,
      interaction_type: str,
      service: ProductService = Depends()
@@ -83,7 +83,7 @@ async def log_interaction(
      """
      
      await service.log_product_interaction(
-          user_id=user_id,
+          userId=userId,
           product_id=product_id,
           interaction_type=interaction_type
      )

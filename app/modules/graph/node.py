@@ -37,8 +37,8 @@ class Node:
 
      async def personal_setup_node(self, state: GraphState, config: RunnableConfig):
           """Fetch user's personal setup/preferences"""
-          user_id = config.get("configurable", {}).get("user_id")
-          # TODO: Fetch from database based on user_id
+          userId = config.get("configurable", {}).get("userId")
+          # TODO: Fetch from database based on userId
           return {"personal_setup": "want to do gym notion else want to do "}
 
      async def conversation_node(self, state: GraphState, config: RunnableConfig):

@@ -3,18 +3,13 @@ from app.DB.mongodb.mongodb import MongoDB
 from openai import AsyncOpenAI
 from fastapi import HTTPException
 from app.config.settings import settings
-from app.prompt.prompt import personal_setup_user_prompt, personal_setup_system_prompt
 from .personal_setup_schema import StrategyRoadmap
 from app.utils.embedding.embedding import LocalEmbeddingService
-<<<<<<< HEAD
 from bson import ObjectId
 from bson.errors import InvalidId
-=======
 from app.prompt.prompt import initial_planning_system_prompt, initial_planning_user_prompt
-from .personal_setup_schema import UserSetup, StrategyRoadmap
+import json
 
-
->>>>>>> 6c6cd9d6ece60c06c0d9230e9a50ad578e07ddb2
 class personalSetup:
      def __init__(self):
           self.mongodb = MongoDB()
@@ -22,92 +17,106 @@ class personalSetup:
           self.openai = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
           self.embedding_service = LocalEmbeddingService()
      
-     async def create_personal_setup(self, user_id: str, personal_setup: dict):
+     async def create_personal_setup(self, userId: str, personal_setup: dict):
           try:
                personal_setup_dict = personal_setup
-               personal_setup_dict["user_id"] = ObjectId(user_id)
-               personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
+               personal_setup_dict["userId"] = ObjectId(userId)  # uncomment this
                result = await self.personal_collection.insert_one(personal_setup_dict)
                return result.inserted_id
           except Exception as e:
                raise HTTPException(status_code=400, detail=str(e))
      
 
-     async def get_personal_setup(self, user_id: str):
+     async def get_personal_setup(self, userId: str):
           try:
                # 1. Convert string to ObjectId for the query
-               oid = ObjectId(user_id)
+               oid = ObjectId(userId)
                
-               result = await self.personal_collection.find_one({"user_id": oid})
+               result = await self.personal_collection.find_one({"userId": oid})
                
                if result:
                     result["_id"] = str(result["_id"])
-                    if isinstance(result.get("user_id"), ObjectId):
-                         result["user_id"] = str(result["user_id"])
+                    if isinstance(result.get("userId"), ObjectId):
+                         result["userId"] = str(result["userId"])
                          
                return result
           except InvalidId:
                raise HTTPException(status_code=400, detail="Invalid ID format")
           except Exception as e:
                raise HTTPException(status_code=500, detail=str(e))
-     async def update_personal_setup(self, user_id: str, personal_setup: dict):
+     async def update_personal_setup(self, userId: str, personal_setup: dict):
           try:
-               personal_setup_dict = personal_setup
-               personal_setup_dict["user_id"] = user_id
-               personal_setup_dict["embedding"] = await self.embedding_service.generate_embedding(personal_setup_dict)
-               result = await self.personal_collection.update_one({"user_id": ObjectId(user_id)}, {"$set": personal_setup_dict})
-               
-               return result.modified_count
+               result = await self.personal_collection.update_one(
+                    {"userId": ObjectId(userId)}, {"$set": personal_setup}
+               )
+               if result.matched_count == 0:
+                    raise HTTPException(status_code=404, detail="User setup not found")
+               return {
+                    "matched": result.matched_count,
+                    "modified": result.modified_count,
+                    "message": "Updated" if result.modified_count > 0 else "No changes detected"
+               }
+          except HTTPException:
+               raise
           except Exception as e:
-               raise HTTPException(status_code=400, detail=str(e))
+               raise HTTPException(status_code=500, detail=str(e)) 
      
-     async def get_prompt(self, new_personal_setup: dict):
-          system_prompt = personal_setup_system_prompt.format(plan_schema=StrategyRoadmap.schema_json())
-          user_prompt = personal_setup_user_prompt.format(personal_setup=new_personal_setup)
      async def get_prompt(self, personal_setup: dict):
-          system_prompt = initial_planning_system_prompt.format(strategic_roadmap_schema=StrategyRoadmap.schema_json())
+          schema_dict = StrategyRoadmap.model_json_schema()
+          schema_json = json.dumps(schema_dict, indent=2)
+          schema_escaped = schema_json.replace("{", "{{").replace("}", "}}")
+          system_prompt = initial_planning_system_prompt.format(plan_schema=schema_escaped)
           user_prompt = initial_planning_user_prompt.format(personal_setup=personal_setup)
           return system_prompt, user_prompt
 
-
-     async def get_response(self, user_id: str, new_personal_setup: dict):
+     async def get_response(self, userId: str, new_personal_setup: dict):
           try:
-<<<<<<< HEAD
-               existing_personal_setup = await self.personal_collection.find_one({"user_id": ObjectId(user_id)})
+               existing_personal_setup = await self.personal_collection.find_one({"userId": ObjectId(userId)})
+               
                if existing_personal_setup:
-                    await self.update_personal_setup(user_id, new_personal_setup)
+                    update_result = await self.update_personal_setup(userId, new_personal_setup)
+                    print(f"Update result: {update_result}")
                else:
-                    await self.create_personal_setup(user_id, new_personal_setup)
-=======
-               system_prompt ,user_prompt = await self.get_prompt(personal_setup)
-
-               existing_personal_setup = await self.get_personal_setup(user_id)
-               if existing_personal_setup:
-                   await self.update_personal_setup(user_id, personal_setup)
-                   message = "Personal setup updated successfully"
-               else:
-                   await self.create_personal_setup(user_id, personal_setup)
-                   message = "Personal setup created successfully"
-
->>>>>>> 6c6cd9d6ece60c06c0d9230e9a50ad578e07ddb2
-               system_prompt ,user_prompt = await self.get_prompt(new_personal_setup)
+                    insert_id = await self.create_personal_setup(userId, new_personal_setup)
+                    print(f"Created new setup: {insert_id}")
+               
+               system_prompt, user_prompt = await self.get_prompt(new_personal_setup)
                
                completions = await self.openai.chat.completions.create(
-                    model="gpt-4.1-mini",
+                    model="gpt-4o-mini",
                     messages=[
                          {"role": "system", "content": system_prompt},
                          {"role": "user", "content": user_prompt}
                     ]
                )
+               
                response = completions.choices[0].message.content
+               
+               # Strip markdown
+               response = response.strip()
                if response.startswith("```json"):
-                    response = response[7:]
+                    response = response[7:].lstrip()
+               elif response.startswith("```"):
+                    response = response[3:].lstrip()
                if response.endswith("```"):
-                    response = response[:-3]
+                    response = response[:-3].rstrip()
+               response = response.strip()
+               
+               try:
+                    strategy_roadmap_dict = json.loads(response)
+               except json.JSONDecodeError as e:
+                    print(f"❌ Failed to parse JSON response: {e}")
+                    raise HTTPException(status_code=500, detail=f"Invalid JSON from AI: {str(e)}")
+               
+               await self.update_personal_setup(userId, {"strategy_roadmap": strategy_roadmap_dict})
                
                return {
-                    "message":message,
-                    "response":response
+                    "message": "Personal setup updated successfully",
+                    "response": strategy_roadmap_dict  
                }
+          
+          except HTTPException:
+               raise
           except Exception as e:
-               raise HTTPException(status_code=400, detail=str(e))
+               print(f"❌ Error in get_response: {type(e).__name__}: {str(e)}")
+               raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
