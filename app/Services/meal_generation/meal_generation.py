@@ -19,7 +19,7 @@ class MealGeneration:
                meal="not found previous 3 days meals"
                workout="not found previous 3 days workouts"
           system_prompt = Meal_system_prompt.format(meal_schema=DailyMealLog.model_json_schema())
-          user_prompt = Meal_user_prompt.format(meals=meal,workouts=workout)
+          user_prompt = Meal_user_prompt.format(meals=meal,workouts=workout,personal_strategy_roadmap=personal_strategy_roadmap)
           return system_prompt,user_prompt
      
      async def get_response(self,userId:str):
