@@ -1,4 +1,5 @@
 
+from requests import request
 from app.DB.mongodb.mongodb import MongoDB
 from openai import AsyncOpenAI
 from fastapi import HTTPException
@@ -10,6 +11,7 @@ from bson.errors import InvalidId
 from app.prompt.prompt import initial_planning_system_prompt, initial_planning_user_prompt
 import json
 from datetime import datetime, timezone
+import httpx
 
 class personalSetup:
      def __init__(self):
@@ -86,7 +88,12 @@ class personalSetup:
                else:
                     insert_id = await self.create_personal_setup(userId, new_personal_setup)
                     print(f"Created new setup: {insert_id}")
-               
+                    url = f"http://72.62.160.245:5555/api/v1/users/generate-daily-workout-and-nutrition"
+                    try:
+                         async with httpx.AsyncClient() as client:
+                              await client.post(url, json={"userId": insert_id})
+                    except Exception as e:
+                         print(f"❌ Failed to generate daily workout and nutrition: {e}")
                system_prompt, user_prompt = await self.get_prompt(new_personal_setup)
                
                completions = await self.openai.chat.completions.create(
