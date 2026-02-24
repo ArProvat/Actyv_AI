@@ -119,10 +119,8 @@ class AI_coach:
                                         "content": generated_title
                                    }
                
-               # After streaming completes, save to database
                assistant_response = "".join(full_response)
                
-               # If we didn't stream anything, get the final state
                if not has_yielded_text:
                     final_state = await self.graph.aget_state(config)
                     if final_state and final_state.values.get("messages"):
@@ -134,7 +132,6 @@ class AI_coach:
                                    "content": assistant_response
                               }
                          
-                         # Check for image in final state
                          if final_state.values.get("generated_image") and not has_yielded_image:
                               generated_image_url = final_state.values["generated_image"]
                               yield {
