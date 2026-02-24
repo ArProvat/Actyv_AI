@@ -86,26 +86,23 @@ class MongoDB:
                else:
                     print(f"Failed to create search index: {e}")
      async def get_sessions(self, userId: str) -> List[Dict]:
-          """Get all sessions for a user"""
           cursor = self.session_collection.find(
-               {"userId": ObjectId(userId)},
+               {"userId": userId},                          # ✅ plain string
                {"_id": 0, "session_id": 1, "title": 1, "created_at": 1, "updated_at": 1}
           ).sort("updated_at", -1)
           return await cursor.to_list(length=100)
-     
+
      async def get_messages(self, session_id: str) -> List[Dict]:
-          """Get all messages for a session"""
           cursor = self.message_collection.find(
-               {"session_id": ObjectId(session_id)},
+               {"session_id": session_id},                  # ✅ plain string
                {"_id": 0, "content": 1, "role": 1, "timestamp": 1, "image_url": 1}
           ).sort("timestamp", 1)
           return await cursor.to_list(length=1000)
-     
+
      async def create_session(self, userId: str, session_id: str, title: str = "New Conversation"):
-          """Create a new session"""
           session_doc = {
-               "userId": ObjectId(userId),
-               "session_id": ObjectId(session_id),
+               "userId": userId,                            # ✅ plain string
+               "session_id": session_id,                    # ✅ plain string
                "title": title,
                "created_at": datetime.utcnow(),
                "updated_at": datetime.utcnow()
@@ -114,46 +111,39 @@ class MongoDB:
                await self.session_collection.insert_one(session_doc)
                return session_doc
           except Exception as e:
-               # Session might already exist, update it instead
-               await self.update_session(ObjectId(session_id), title)
+               await self.update_session(session_id, title)
                return session_doc
-     
+
      async def update_session(self, session_id: str, title: Optional[str] = None):
-          """Update session title and/or updated_at timestamp"""
           update_doc = {"updated_at": datetime.utcnow()}
           if title:
                update_doc["title"] = title
-          
           await self.session_collection.update_one(
-               {"session_id": ObjectId(session_id)},
+               {"session_id": session_id},                  # ✅ plain string
                {"$set": update_doc}
           )
-     
+
      async def save_message(
-          self, 
-          session_id: str, 
+          self,
+          session_id: str,
           userId: str,
-          role: str, 
+          role: str,
           content: str,
           image_url: Optional[str] = None
-     ):
-          """Save a single message (user or assistant)"""
+          ):
           message_doc = {
-               "session_id": ObjectId(session_id),
-               "userId": ObjectId(userId),
-               "role": role,  # "user" or "assistant"
+               "session_id": session_id,                    # ✅ plain string
+               "userId": userId,                            # ✅ plain string
+               "role": role,
                "content": content,
                "timestamp": datetime.utcnow()
           }
-          
           if image_url:
                message_doc["image_url"] = image_url
-          
+
           await self.message_collection.insert_one(message_doc)
-          
-          # Update session's updated_at timestamp
           await self.update_session(session_id)
-     
+
      async def save_conversation_turn(
           self,
           session_id: str,
@@ -162,37 +152,31 @@ class MongoDB:
           assistant_message: str,
           user_image_url: Optional[str] = None,
           assistant_image_url: Optional[str] = None
-     ):
-          """Save both user message and assistant response in one go"""
-          # Save user message
+          ):
           await self.save_message(
-               session_id=ObjectId(session_id),
-               userId=ObjectId(userId),
+               session_id=session_id,                       # ✅ plain string
+               userId=userId,                               # ✅ plain string
                role="user",
                content=user_message,
                image_url=user_image_url
           )
-          
-          # Save assistant message
           await self.save_message(
-               session_id=ObjectId(session_id),
-               userId=ObjectId(userId),
+               session_id=session_id,                       # ✅ plain string
+               userId=userId,                               # ✅ plain string
                role="assistant",
                content=assistant_message,
                image_url=assistant_image_url
           )
-     
+
      async def delete_session(self, session_id: str, userId: str):
-          """Delete a session and all its messages"""
           await self.session_collection.delete_one({
-               "session_id": ObjectId(session_id),
-               "userId": ObjectId(userId)
+               "session_id": session_id,                    # ✅ plain string
+               "userId": userId                             # ✅ plain string
           })
           await self.message_collection.delete_many({
-               "session_id": ObjectId(session_id),
-               "userId": ObjectId(userId)
+               "session_id": session_id,                    # ✅ plain string
+               "userId": userId                             # ✅ plain string
           })
-     
      
      async def get_meal(self, userId: str):
           cursor = self.meal_collection.find(

@@ -65,29 +65,35 @@ class Node:
           return {'messages': [AIMessage(content=response.content)]}
 
      async def conversation_node_with_image(self, state: GraphState, config: RunnableConfig):
-          """Handle conversation responses with image generation - RETURNS state update"""
           # Generate image first
+          print("Generating image...")
           image_url = await self.image_node.get_image(state["messages"][-3:])
-          
-          # Format the system prompt with context
+          print("Image generated successfully")
+
           system_message = CONVERSATION_PROMPT.format(
                personal_setup=state.get("personal_setup", "No personal setup available"),
                summary=state.get("summary", "No previous conversation summary")
-          )
-          
+          ) + f"""
+
+          # CRITICAL RULE — IMAGE ALREADY SENT
+          An image has already been generated and delivered to the user automatically.
+          Image URL: {image_url}
+
+          You MUST:
+          - Acknowledge the image was sent (e.g. "Here's your avocado toast! 🥑")
+          - NEVER say you cannot send, generate, or attach images
+          - NEVER offer alternative tools like DALL·E or Midjourney
+          - Keep your response short and friendly
+          """
+
           prompt = ChatPromptTemplate.from_messages([
                ("system", system_message),
                MessagesPlaceholder(variable_name="messages")
           ])
-          
+
           chain = prompt | self.llm
-          
-          # Invoke to get complete response
-          response = await chain.ainvoke({
-               "messages": state["messages"][-20:]
-          })
-          
-          # Return both message and image
+          response = await chain.ainvoke({"messages": state["messages"][-20:]})
+
           return {
                'messages': [AIMessage(content=response.content)],
                'generated_image': image_url

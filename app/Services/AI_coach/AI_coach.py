@@ -6,8 +6,8 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.checkpoint.mongodb import MongoDBSaver
 from pymongo import MongoClient
 import base64
-import json
 import uuid
+from bson.objectid import ObjectId
 
 
 class AI_coach:
@@ -84,7 +84,9 @@ class AI_coach:
                     name = event.get("name", "")
                     
                     # Stream text chunks from LLM
-                    if kind == "on_chat_model_stream":
+                    STREAMING_NODES = {"conversation_node", "conversation_node_with_image"}
+
+                    if kind == "on_chat_model_stream" and event.get("metadata", {}).get("langgraph_node") in STREAMING_NODES:
                          chunk = event.get("data", {}).get("chunk")
                          if chunk and hasattr(chunk, 'content') and chunk.content:
                               has_yielded_text = True
@@ -153,22 +155,22 @@ class AI_coach:
                # Save the conversation to MongoDB
                if assistant_response:
                     # Create or update session with title if generated
+                    # Save the conversation to MongoDB
                     if generated_title:
                          await self.db.create_session(
                               userId=userId,
-                              session_id=session_id,
+                              session_id=session_id,        
                               title=generated_title
-                         )
-                    
-                    # Save the conversation turn
-                    await self.db.save_conversation_turn(
-                         session_id=session_id,
-                         userId=userId,
-                         user_message=query,  # Original query text
-                         assistant_message=assistant_response,
-                         user_image_url= None,
-                         assistant_image_url=generated_image_url
                     )
+               
+               await self.db.save_conversation_turn(
+                    session_id=session_id,            
+                    userId=userId,
+                    user_message=query,
+                    assistant_message=assistant_response,
+                    user_image_url=None,
+                    assistant_image_url=generated_image_url
+               )
           
           except Exception as e:
                yield {
