@@ -280,7 +280,7 @@ example:
         ]
 }}   
 
-# Output should be in this given json format:
+# Strictly output should be in this given json format:
 {plan_schema}
 
 # Every list should contain at least 1 and at max 3 items.
@@ -290,6 +290,8 @@ example:
 
 if user provided onboarding data injury field is not empty, then injury_protocol should be active and focus should be on the injury.
 if user provided onboarding data injury field is empty, then injury_protocol should be suggested carefull on workout .
+
+You must respond ONLY with valid JSON. No explanation, no markdown, no extra text.
 
 """
 

@@ -1,17 +1,17 @@
-
-from requests import request
-from app.DB.mongodb.mongodb import MongoDB
-from openai import AsyncOpenAI
-from fastapi import HTTPException
-from app.config.settings import settings
-from .personal_setup_schema import StrategyRoadmap
-from app.utils.embedding.embedding import LocalEmbeddingService
-from bson import ObjectId
-from bson.errors import InvalidId
 from app.prompt.prompt import initial_planning_system_prompt, initial_planning_user_prompt
-import json
+from app.utils.embedding.embedding import LocalEmbeddingService
+from .personal_setup_schema import StrategyRoadmap
+from app.DB.mongodb.mongodb import MongoDB
+from app.config.settings import settings
 from datetime import datetime, timezone
+from bson.errors import InvalidId
+from fastapi import HTTPException
+from openai import AsyncOpenAI
+from requests import request
+from bson import ObjectId
+import asyncio
 import httpx
+import json
 
 class personalSetup:
      def __init__(self):
@@ -78,57 +78,41 @@ class personalSetup:
           user_prompt = initial_planning_user_prompt.format(personal_setup=personal_setup)
           return system_prompt, user_prompt
 
+
      async def get_response(self, userId: str, new_personal_setup: dict):
           try:
-               existing_personal_setup = await self.personal_collection.find_one({"userId": ObjectId(userId)})
-               
-               if existing_personal_setup:
-                    update_result = await self.update_personal_setup(userId, new_personal_setup)
-                    print(f"Update result: {update_result}")
-               else:
-                    insert_id = await self.create_personal_setup(userId, new_personal_setup)
-                    print(f"Created new setup: {insert_id}")
-                    url = f"http://72.62.160.245:5555/api/v1/users/generate-daily-workout-and-nutrition"
-                    try:
-                         async with httpx.AsyncClient() as client:
-                              await client.post(url, json={"userId": insert_id})
-                    except Exception as e:
-                         print(f"❌ Failed to generate daily workout and nutrition: {e}")
                system_prompt, user_prompt = await self.get_prompt(new_personal_setup)
-               
-               completions = await self.openai.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                         {"role": "system", "content": system_prompt},
-                         {"role": "user", "content": user_prompt}
-                    ]
+
+               existing_setup, completions = await asyncio.gather(
+                    self.personal_collection.find_one({"userId": ObjectId(userId)}),
+                    self.openai.chat.completions.create(
+                         model="gpt-4o-mini",
+                         messages=[
+                              {"role": "system", "content": system_prompt},
+                              {"role": "user",   "content": user_prompt},
+                         ],
+                         response_format={"type": "json_object"}
+                    )
                )
-               
-               response = completions.choices[0].message.content
-               
-               # Strip markdown
-               response = response.strip()
-               if response.startswith("```json"):
-                    response = response[7:].lstrip()
-               elif response.startswith("```"):
-                    response = response[3:].lstrip()
-               if response.endswith("```"):
-                    response = response[:-3].rstrip()
-               response = response.strip()
-               
+
+               response_text = completions.choices[0].message.content.strip()
                try:
-                    strategy_roadmap_dict = json.loads(response)
+                    strategy_roadmap_dict = json.loads(response_text)
                except json.JSONDecodeError as e:
-                    print(f"❌ Failed to parse JSON response: {e}")
                     raise HTTPException(status_code=500, detail=f"Invalid JSON from AI: {str(e)}")
-               
+
+               if existing_setup:
+                    await self.update_personal_setup(userId, new_personal_setup)
+               else:
+                    await self.create_personal_setup(userId, new_personal_setup)
+
                await self.update_personal_setup(userId, {"strategy_roadmap": strategy_roadmap_dict})
                
                return {
                     "message": "Personal setup updated successfully",
-                    "response": strategy_roadmap_dict  
+                    "response": strategy_roadmap_dict
                }
-          
+
           except HTTPException:
                raise
           except Exception as e:
