@@ -92,9 +92,9 @@ class MongoDB:
           ).sort("updated_at", -1)
           return await cursor.to_list(length=100)
 
-     async def get_messages(self, session_id: str) -> List[Dict]:
+     async def get_messages(self, session_id: str, user_id: str) -> List[Dict]:
           cursor = self.message_collection.find(
-               {"session_id": session_id},                  # ✅ plain string
+               {"session_id": session_id, "userId": user_id},                  # ✅ plain string
                {"_id": 0, "content": 1, "role": 1, "timestamp": 1, "image_url": 1}
           ).sort("timestamp", 1)
           return await cursor.to_list(length=1000)
