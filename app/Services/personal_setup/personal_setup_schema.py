@@ -22,6 +22,7 @@ class BloodType(str, Enum):
      O_NEGATIVE = "O_NEGATIVE"
      AB_POSITIVE = "AB_POSITIVE"
      AB_NEGATIVE = "AB_NEGATIVE"
+     NOT_KNOWN = "Unsure/Prefer not to say"
 
 class UserSetup(BaseModel):
      fitnessGoal: FitnessGoal

@@ -100,15 +100,14 @@ class AI_coach:
 
                 if (
                     kind == "on_chat_model_stream"
-                    and event.get("metadata", {}).get("langgraph_node")
-                    in STREAMING_NODES
+                    and event.get("metadata", {}).get("langgraph_node") in STREAMING_NODES
+                    and "main_response" in event.get("tags", [])  # ✅ only main LLM, not image-prompt LLM
                 ):
                     chunk = event.get("data", {}).get("chunk")
                     if chunk and hasattr(chunk, "content") and chunk.content:
                         has_yielded_text = True
                         full_response.append(chunk.content)
                         yield {"type": "text", "content": chunk.content}
-
                 # (C) Handle node completions
                 elif kind == "on_chain_end":
                     output = event.get("data", {}).get("output", {})
