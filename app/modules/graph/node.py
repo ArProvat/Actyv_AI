@@ -54,9 +54,7 @@ class Node:
                [("system", system_message), MessagesPlaceholder(variable_name="messages")]
           )
 
-          chain = prompt | self.llm
-
-          # Invoke to get complete response
+          chain = prompt | self.llm.with_config(tags=["main_response"])  # ✅ same tag
           response = await chain.ainvoke({"messages": state["messages"][-20:]})
 
           # Return the complete message for state update
@@ -109,7 +107,7 @@ class Node:
           # ── 3. Stream LLM response while image renders in the background ─────────
           # astream_events handles the streaming tokens; here we use chain.ainvoke
           # to get the final message for LangGraph state persistence.
-          chain = prompt | self.llm
+          chain = prompt | self.llm.with_config(tags=["main_response"])
           response = await chain.ainvoke({"messages": state["messages"][-20:]})
 
           # ── 4. Collect image URL (usually already done by now) ───────────────────

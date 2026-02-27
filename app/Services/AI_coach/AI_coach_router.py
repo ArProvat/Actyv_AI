@@ -53,27 +53,17 @@ async def chat_endpoint(request: ChatRequest):
 '''
 
 
+# ✅ Fixed endpoint — userId as Form field, not query param
 @router.post("/api/chat")
 async def chat_with_file_endpoint(
-     userId: str,
+     userId: str = Form(...),           # ✅ was a query param, breaks multipart requests
      query: str = Form(...),
      file: Optional[UploadFile] = File(None),
      session_id: Optional[str] = Form(None)
 ):
-     """
-     Chat endpoint with optional file upload
-
-     Form data:
-          - query: User's message
-          - file: Optional uploaded file
-          - userId: User identifier (required for saving)
-          - session_id: Session identifier (auto-generated if not provided)
-
-     Returns streaming response with text and optionally images
-     """
      file_bytes = None
      file_extension = None
-     userId = userId
+
      if file:
           file_bytes = await file.read()
           if file.filename:
@@ -94,14 +84,10 @@ async def chat_with_file_endpoint(
                yield f"data: {json.dumps(error_chunk)}\n\n"
 
      return StreamingResponse(
-          event_stream(),
-          media_type="text/event-stream",
-          headers={
-               "Cache-Control": "no-cache",
-               "Connection": "keep-alive",
-          },
+               event_stream(),
+               media_type="text/event-stream",
+               headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
      )
-
 
 @router.get("/api/sessions")
 async def get_user_sessions(userId:str):
