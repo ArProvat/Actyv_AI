@@ -7,3 +7,24 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    depends_on:
+      - qdrant
+    networks:
+      - actyv_ai_net
+
+  qdrant:
+    image: qdrant/qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - actyv_ai_net
+
+volumes:
+  qdrant_data:
+
+networks:
+  actyv_ai_net:
+    driver: bridge
