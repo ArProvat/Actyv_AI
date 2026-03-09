@@ -205,3 +205,13 @@ class MongoDB:
                {"strategy_roadmap": 1}
           ).sort("created_at", -1).limit(1)
           return await cursor.to_list(length=1)
+
+     async def get_product(self, product_id: str):
+          product = await self.product_collection.find_one({"_id": ObjectId(product_id)})
+          return product
+
+     async def get_multiple_products(self, id_list):
+          object_ids = [ObjectId(id_ptr) for id_ptr in id_list]
+          cursor = self.product_collection.find({"_id": {"$in": object_ids}})
+          products = await cursor.to_list(length=100) 
+          return products
