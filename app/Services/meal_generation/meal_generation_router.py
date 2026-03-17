@@ -7,7 +7,7 @@ router = APIRouter()
 
 meal_generation = MealGeneration()
 
-@router.post("/meal_generation")
+@router.get("/meal_generation")
 async def meal_generation_router(userId:str):
      try:
           return await meal_generation.get_response(userId)
